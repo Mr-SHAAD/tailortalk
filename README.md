@@ -1,183 +1,120 @@
 # TailorTalk — Conversational Google Drive Search Agent
 
-## Architecture
+> **An AI-powered assistant that lets you search and discover files in Google Drive through natural conversation.**
 
-```
-User (Browser)
-    ↓
-Streamlit Frontend (frontend/app.py)  ← Chat UI
-    ↓ HTTP POST /chat
-FastAPI Backend (backend/main.py)     ← API Server
-    ↓
-LangChain Agent (backend/agent.py)    ← AI Brain
-    ↓ Tool Call
-Google Drive Tool (backend/google_drive_tool.py)
-    ↓
-Google Drive API                      ← Actual files
-```
+[![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.111-green?logo=fastapi)](https://fastapi.tiangolo.com)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.35-red?logo=streamlit)](https://streamlit.io)
+[![LangChain](https://img.shields.io/badge/LangChain-0.2-yellow)](https://langchain.com)
+[![Google Drive API](https://img.shields.io/badge/Google_Drive_API-v3-blue?logo=google-drive)](https://developers.google.com/drive)
 
 ---
 
-## Step 1 — Groq API Key Lo (FREE)
+## Live Demo
 
-1. https://console.groq.com/ pe jao
-2. Sign up karo (Google se bhi ho sakta hai)
-3. "API Keys" mein jao → "Create API Key"
-4. Key copy karo — `gsk_...` se shuru hogi
-
----
-
-## Step 2 — Google Drive Service Account Banao
-
-Ye sabse important step hai. Dhyan se karo:
-
-### 2a. Google Cloud Console mein Project banao
-1. https://console.cloud.google.com/ pe jao
-2. Top pe "Select Project" → "New Project"
-3. Name: `TailorTalk` → Create
-
-### 2b. Google Drive API Enable karo
-1. Left menu → "APIs & Services" → "Library"
-2. Search: "Google Drive API"
-3. Click → "Enable"
-
-### 2c. Service Account banao
-1. Left menu → "APIs & Services" → "Credentials"
-2. "+ Create Credentials" → "Service Account"
-3. Name: `tailortalk-service` → Create
-4. Role: "Editor" → Continue → Done
-
-### 2d. JSON Key download karo
-1. Service accounts list mein apna account click karo
-2. "Keys" tab → "Add Key" → "Create New Key"
-3. JSON select karo → Create
-4. File download hogi — iska naam `service_account.json` rakho
-5. Is file ko project ke root mein rakh do
-
-### 2e. Drive Folder share karo Service Account se
-1. Sample folder copy karo apne Drive mein:
-   https://drive.google.com/drive/folders/1qkx58doSeYrcLjHPDysJyVJ36PsSqqlt
-2. Copied folder pe right click → "Share"
-3. Service account ki email add karo (service_account.json mein `client_email` field mein hai)
-4. Permission: "Viewer" → Share
-5. Folder URL se ID copy karo:
-   `https://drive.google.com/drive/folders/FOLDER_ID_YE_HAI`
+| Service | URL |
+|---------|-----|
+| 🌐 Frontend (Chat UI) | `[Streamlit URL]` |
+| ⚙️ Backend (API) | `[Render URL]` |
+| 📂 GitHub Repository | https://github.com/Mr-SHAAD/tailortalk |
 
 ---
 
-## Step 3 — .env File Banao
+## What is TailorTalk?
 
-```bash
-cp .env.example .env
-```
+TailorTalk is a **conversational AI agent** that enables users to search, filter, and discover files within a designated Google Drive folder using natural language — no technical queries required.
 
-.env mein fill karo:
+Instead of manually browsing folders, users can simply ask:
+
+- *"Find the financial report from last week"*
+- *"Show me all PDF files"*
+- *"Find documents about invoices"*
+- *"List all spreadsheets modified this month"*
+
+The agent understands the intent, translates it into a precise Google Drive API query, fetches the results, and presents them in a clean, conversational format.
+
+---
+
+## System Architecture
+
 ```
-GROQ_API_KEY=gsk_your_key_here
-LLM_PROVIDER=groq
-GOOGLE_SERVICE_ACCOUNT_FILE=service_account.json
-GOOGLE_DRIVE_FOLDER_ID=1qkx58doSeYrcLjHPDysJyVJ36PsSqqlt
-BACKEND_URL=http://localhost:8000
+┌─────────────────────────────────────────────────────────┐
+│                    USER (Browser)                        │
+└─────────────────────┬───────────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────────┐
+│              Streamlit Frontend (Chat UI)                │
+│              frontend/app.py — Port 8501                 │
+└─────────────────────┬───────────────────────────────────┘
+                      │  HTTP POST /chat
+                      ▼
+┌─────────────────────────────────────────────────────────┐
+│              FastAPI Backend (REST API)                  │
+│              backend/main.py — Port 8000                 │
+│              Endpoints: /chat  /reset  /health           │
+└─────────────────────┬───────────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────────┐
+│           AI Agent (LangChain + Groq LLM)               │
+│           backend/agent.py                               │
+│           Model: llama-3.1-8b-instant (FREE)            │
+└─────────────────────┬───────────────────────────────────┘
+                      │  Tool Call
+                      ▼
+┌─────────────────────────────────────────────────────────┐
+│         Google Drive Search Tool                         │
+│         backend/google_drive_tool.py                     │
+│         Uses: files.list(), q parameter, fullText        │
+└─────────────────────┬───────────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────────────────┐
+│              Google Drive API (v3)                       │
+│              Service Account Authentication              │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Step 4 — Install Dependencies
+## Key Features
 
-```bash
-# Python virtual environment banao
-python -m venv venv
-
-# Activate karo
-# Windows:
-venv\Scripts\activate
-# Mac/Linux:
-source venv/bin/activate
-
-# Dependencies install karo
-pip install -r requirements.txt
-```
+- **Natural Language Search** — Users describe what they need in plain English; the agent handles the query translation
+- **Multi-parameter Filtering** — Search by file name, type (PDF, Docs, Sheets, Images), content (`fullText`), and modification date
+- **Conversational Memory** — The agent remembers context across messages within a session
+- **Real-time Results** — Files returned with direct Google Drive links for instant access
+- **Quick Filters** — One-click buttons for common searches (All PDFs, Recent Files, Images, etc.)
+- **Session Management** — Each user session is independent; conversation can be reset anytime
+- **Health Monitoring** — Live backend status indicator in the UI
 
 ---
 
-## Step 5 — Locally Run Karo
+## Technical Stack
 
-**Terminal 1 — Backend:**
-```bash
-cd backend
-uvicorn main:app --reload --port 8000
-```
-→ http://localhost:8000 pe open hoga
-→ http://localhost:8000/docs pe API documentation milegi
-
-**Terminal 2 — Frontend:**
-```bash
-cd frontend
-streamlit run app.py
-```
-→ http://localhost:8501 pe chat UI open hoga
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| **Frontend** | Streamlit | Chat interface |
+| **Backend** | FastAPI + Uvicorn | REST API server |
+| **AI Agent** | LangChain + Groq | Natural language understanding |
+| **LLM** | Llama 3.1 8B (via Groq) | Free, fast inference |
+| **Drive Integration** | Google Drive API v3 | File search and retrieval |
+| **Auth** | Google Service Account | Secure Drive access |
+| **Deployment** | Render (Backend) + Streamlit Cloud (Frontend) | Cloud hosting |
 
 ---
 
-## Step 6 — Test Karo
+## Google Drive Search Capabilities
 
-Streamlit mein ye queries try karo:
-- "show all files"
-- "find PDF files"
-- "find documents about finance"
-- "show files from last week"
+The agent translates natural language into precise Drive API queries:
 
----
-
-## Step 7 — Railway pe Deploy Karo
-
-### Backend Deploy (Railway)
-1. https://railway.app/ pe jao → Login with GitHub
-2. "New Project" → "Deploy from GitHub repo"
-3. Apna repo select karo
-4. Environment Variables add karo (same as .env):
-   - GROQ_API_KEY
-   - LLM_PROVIDER=groq
-   - GOOGLE_DRIVE_FOLDER_ID
-   - GOOGLE_SERVICE_ACCOUNT_FILE=service_account.json
-5. service_account.json ka content bhi env var mein add karo:
-   - Variable name: `GOOGLE_SERVICE_ACCOUNT_JSON`
-   - Value: poora JSON file ka content paste karo
-6. Start command: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
-7. Deploy → URL milega like: `https://tailortalk-backend.railway.app`
-
-### Frontend Deploy (Streamlit Cloud) — FREE
-1. https://streamlit.io/cloud pe jao → Login with GitHub
-2. "New app" → repo select karo
-3. Main file path: `frontend/app.py`
-4. Secrets mein add karo:
-   ```toml
-   BACKEND_URL = "https://your-railway-backend-url.railway.app"
-   GROQ_API_KEY = "gsk_..."
-   GOOGLE_DRIVE_FOLDER_ID = "your_folder_id"
-   ```
-5. Deploy → URL milega
-
----
-
-## Common Errors & Fixes
-
-### "No files found" always
-- Drive folder ID check karo
-- Service account ko folder share kiya kya?
-- Folder mein files hain kya?
-
-### "Error: credentials file not found"
-- service_account.json sahi jagah hai kya?
-- Railway pe — JSON content ko env var mein daalo
-
-### "Groq API error"
-- API key check karo
-- Free tier limit exceed toh nahi hua?
-
-### Backend connect nahi ho raha
-- BACKEND_URL .env mein sahi hai kya?
-- Backend wala terminal chal raha hai kya?
+| User Says | Drive API Query Generated |
+|-----------|--------------------------|
+| "find all PDFs" | `mimeType = 'application/pdf'` |
+| "show Google Docs" | `mimeType = 'application/vnd.google-apps.document'` |
+| "files from last week" | `modifiedTime > '2026-05-07T00:00:00'` |
+| "documents about invoice" | `fullText contains 'invoice'` |
+| "find report PDF" | `name contains 'report' and mimeType = 'application/pdf'` |
 
 ---
 
@@ -186,30 +123,161 @@ Streamlit mein ye queries try karo:
 ```
 tailortalk/
 ├── backend/
-│   ├── main.py              # FastAPI server — API endpoints
-│   ├── agent.py             # LangChain agent — AI brain
-│   └── google_drive_tool.py # Drive API integration
+│   ├── main.py                 # FastAPI server — /chat, /reset, /health, /files
+│   ├── agent.py                # AI agent — LangChain + Groq LLM
+│   ├── google_drive_tool.py    # Google Drive API integration
+│   └── service_account.json   # Google credentials (not committed)
 ├── frontend/
-│   ├── app.py               # Streamlit chat UI
+│   ├── app.py                  # Streamlit chat UI
 │   └── .streamlit/
-│       └── config.toml      # Streamlit config
-├── service_account.json     # Google credentials (DO NOT COMMIT)
-├── .env                     # Your secrets (DO NOT COMMIT)
-├── .env.example             # Template
-├── requirements.txt
-├── Procfile                 # Railway deployment
+│       └── config.toml         # Streamlit theme configuration
+├── .env.example                # Environment variables template
+├── .gitignore                  # Secrets excluded from version control
+├── Procfile                    # Render deployment configuration
+├── requirements.txt            # Python dependencies
 └── README.md
 ```
 
 ---
 
-## .gitignore (Important — secrets commit mat karo)
+## Local Setup
+
+### Prerequisites
+- Python 3.11+
+- Google Cloud account (free)
+- Groq API key (free) — https://console.groq.com
+
+### Step 1 — Clone the repository
+```bash
+git clone https://github.com/Mr-SHAAD/tailortalk.git
+cd tailortalk
+```
+
+### Step 2 — Create virtual environment
+```bash
+python3 -m venv venv
+source venv/bin/activate        # Mac/Linux
+# venv\Scripts\activate         # Windows
+```
+
+### Step 3 — Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### Step 4 — Configure environment variables
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your credentials:
+```env
+GROQ_API_KEY=your_groq_api_key
+LLM_PROVIDER=groq
+GOOGLE_SERVICE_ACCOUNT_FILE=service_account.json
+GOOGLE_DRIVE_FOLDER_ID=your_folder_id
+BACKEND_URL=http://localhost:8000
+```
+
+### Step 5 — Add Google Service Account
+Place your `service_account.json` file inside the `backend/` directory.
+
+> To generate this file: Google Cloud Console → APIs & Services → Credentials → Create Service Account → Download JSON key
+
+### Step 6 — Share Drive folder with Service Account
+Share your Google Drive folder with the service account email (found in `service_account.json` → `client_email`), granting **Viewer** access.
+
+### Step 7 — Run the application
+
+**Terminal 1 — Backend:**
+```bash
+cd backend
+uvicorn main:app --reload --port 8000
+```
+
+**Terminal 2 — Frontend:**
+```bash
+cd frontend
+streamlit run app.py
+```
+
+Open **http://localhost:8501** in your browser.
+
+---
+
+## API Reference
+
+### `POST /chat`
+Send a message and receive a response from the agent.
+
+**Request:**
+```json
+{
+  "message": "find all PDF files",
+  "session_id": "user_session_1"
+}
+```
+
+**Response:**
+```json
+{
+  "response": "I found 3 PDF files in your Drive...",
+  "session_id": "user_session_1"
+}
+```
+
+### `GET /health`
+Check backend status and configuration.
+
+### `POST /reset`
+Clear conversation history for a session.
+
+### `GET /files`
+List all files in the configured Drive folder.
+
+---
+
+## Deployment
+
+### Backend — Render
+- **Build Command:** `pip install -r requirements.txt`
+- **Start Command:** `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+- **Environment Variables:** Set all values from `.env.example`
+
+### Frontend — Streamlit Cloud
+- **Main file:** `frontend/app.py`
+- **Secrets:** Add `BACKEND_URL` pointing to your Render backend URL
+
+---
+
+## Security
+
+- All credentials (API keys, service account) are excluded from version control via `.gitignore`
+- Google Drive access is read-only (`drive.readonly` scope)
+- Service Account follows least-privilege principle — access limited to the shared folder only
+- CORS configured on the FastAPI backend
+
+---
+
+## Sample Queries to Try
 
 ```
-.env
-service_account.json
-venv/
-__pycache__/
-*.pyc
-.DS_Store
+"Show me all files"
+"Find all PDF documents"
+"Search for files related to finance"
+"Show spreadsheets modified this week"
+"Find images in the drive"
+"Look for any file named report"
+"Show me the most recently modified files"
 ```
+
+---
+
+## Author
+
+**Mohammad Shaad**
+Python Backend Developer
+
+- GitHub: [@Mr-SHAAD](https://github.com/Mr-SHAAD)
+- LinkedIn: [linkedin.com/in/mohammadshaad](https://linkedin.com/in/mohammadshaad)
+- Email: knowmore8126@gmail.com
