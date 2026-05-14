@@ -14,8 +14,8 @@
 
 | Service | URL |
 |---------|-----|
-| 🌐 Frontend (Chat UI) | `[Streamlit URL]` |
-| ⚙️ Backend (API) | `[Render URL]` |
+| 🌐 Frontend (Chat UI) | https://tailortalk-de6vugzt48gnnnsj2ntqnv.streamlit.app/|
+| ⚙️ Backend (API) | https://tailortalk-backend-jtxn.onrender.com |
 | 📂 GitHub Repository | https://github.com/Mr-SHAAD/tailortalk |
 
 ---
