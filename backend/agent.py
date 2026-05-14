@@ -1,28 +1,17 @@
 """
-agent.py — Simple Direct Approach
-LangGraph bypass karke directly Groq + Drive call karo
+agent.py — Direct Groq API (no langchain-groq, no proxies issue)
 """
 
 import os
 from dotenv import load_dotenv
-from langchain_core.messages import HumanMessage, AIMessage
-from langchain_groq import ChatGroq
+from groq import Groq
 from google_drive_tool import get_drive_service
 
 load_dotenv()
 
 
-def get_llm():
-    return ChatGroq(
-        api_key=os.getenv("GROQ_API_KEY"),
-        model="llama-3.1-8b-instant",
-        temperature=0,
-        max_tokens=1024
-    )
-
-
 def search_drive_directly(user_query: str) -> str:
-    """Directly Drive API call karo — no LangGraph needed."""
+    """Directly Drive API call karo."""
     try:
         service = get_drive_service()
         folder_id = os.getenv("GOOGLE_DRIVE_FOLDER_ID")
@@ -72,6 +61,7 @@ def search_drive_directly(user_query: str) -> str:
 
 
 def _readable(mime: str) -> str:
+    """Convert MIME type to readable string."""
     m = {
         "application/pdf": "PDF",
         "application/vnd.google-apps.document": "Google Doc",
@@ -90,11 +80,16 @@ def _readable(mime: str) -> str:
 
 
 class TailorTalkAgent:
+    """Conversational agent for Google Drive search."""
+
     def __init__(self):
-        self.llm = get_llm()
+        """Initialize the TailorTalk agent with Groq client."""
+        self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        self.model = "llama-3.1-8b-instant"
         self.chat_history = []
 
     def chat(self, user_message: str) -> str:
+        """Process user message and return response."""
         try:
             drive_results = search_drive_directly(user_message)
 
@@ -106,13 +101,20 @@ Drive search results:
 {drive_results}
 
 Present these results in a clear, friendly way with file names and links.
-If no files found, suggest alternatives."""
+If no files found, suggest alternatives. Keep it concise."""
 
-            response = self.llm.invoke([HumanMessage(content=prompt)])
-            reply = response.content
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=1024,
+                temperature=0
+            )
 
-            self.chat_history.append(HumanMessage(content=user_message))
-            self.chat_history.append(AIMessage(content=reply))
+            reply = response.choices[0].message.content
+
+            self.chat_history.append({"role": "user", "content": user_message})
+            self.chat_history.append({"role": "assistant", "content": reply})
+
             if len(self.chat_history) > 20:
                 self.chat_history = self.chat_history[-20:]
 
@@ -122,5 +124,6 @@ If no files found, suggest alternatives."""
             return f"Error: {str(e)}"
 
     def reset(self):
+        """Reset conversation history."""
         self.chat_history = []
         return "Conversation reset! How can I help you find files?"
