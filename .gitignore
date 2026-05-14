@@ -1,0 +1,15 @@
+.env
+service_account.json
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+.idea/
+.vscode/
+*.egg-info/
+dist/
+build/
+service_account.json
+earning-169cc-af20f82eb9c0.json
+.env
